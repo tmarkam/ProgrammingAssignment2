@@ -1,32 +1,41 @@
 ## cachematrix.R
-## Coursera R Programming Assignment - week 2
+## Coursera R Programming Assignment - week 3 - Lexical scoping
 ## functions to support cached operations on matrices
 
 ## creates a special "matrix" object that can cache its inverse.
 
 makeCacheMatrix <- function(x = matrix()) {
-  ## return a list, consisting of:
-  ##   [1]=the matrix; 
-  ##   [2]=cached copy of the matrix; 
-  ##   [3]=cached inverse of the original (initialized to NA's)
-  list(matx=x, cach=x, caci=matrix(data = NA, nrow = nrow(x), ncol = ncol(x)))
+  ## return a list of functions, to:
+  ##  set the value of the matrix
+  ##  get the value of the matrix
+  ##  set the value of the inverse
+  ##  get the value of the inverse
+  inv <- NULL
+  set <- function(y) {
+    x <<- y
+    inv <<- NULL  ## when the matrix changes, void the cached inverse
+  }
+  get <- function() x
+  setinv <- function(solve) inv <<- solve
+  getinv <- function() inv
+  list(set = set, get = get,
+       setinv = setinv,
+       getinv = getinv)
 }
-
 
 ## compute the inverse of the special "matrix" returned by makeCacheMatrix above. 
 
-cacheSolve <- function(x) {
+cacheSolve <- function(x, ...) {
   ## Return a matrix that is the inverse of 'x'
-  ## If the inverse has already been calculated (and the matrix has not changed), 
-  ##   then the cachesolve should retrieve the inverse from the cache.
-  
-  ## if (a) the cached inverse matrix is missing, 
-  ## or (b) the matrix has changed from the cached copy
-  ## then re-cache the matrix and recalculate the inverse 
-  if (all(is.na(x$caci)) | !identical(x$matx, x$cach)) {
-    x$cach = x$matx
-    x$caci = solve(x$cach)
+  ## If the inverse is cached, return the cache copy
+  ## else recalculate the inverse, cache it and return it
+  inv <- x$getinv()
+  if(!is.null(inv)) {
+    message("getting cached data")
+    return(inv)
   }
-  ## return the cached inverse
-  x$caci
+  data <- x$get()
+  inv <- solve(data, ...)
+  x$setinv(inv)
+  inv
 }
